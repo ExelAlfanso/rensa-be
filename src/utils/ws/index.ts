@@ -1,5 +1,3 @@
-import { ElysiaWS } from "elysia/dist/ws";
-
 export const onlineUsers = new Map<string, any>();
 
 export const registerUser = (userId: string, ws: any) => {

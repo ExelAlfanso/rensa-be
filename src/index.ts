@@ -48,3 +48,5 @@ const app = new Elysia()
   .listen(4000); // Run on port 4000 to avoid conflict with Next.js (3000)
 
 console.log("🦊 Elysia running on port 4000");
+
+export default app;
