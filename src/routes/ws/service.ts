@@ -2,24 +2,29 @@ export const onlineUsers = new Map<string, any>();
 
 export abstract class WebSocketService {
   static async open(ws: any) {
-    const token = ws.data?.query?.token as string | undefined;
+    console.log("WS DATA:", ws.data.query);
+    const token = ws.data.query.token;
 
-    const payload = await ws.data.jwt.verify(token);
+    try {
+      const payload = await ws.data.jwt.verify(token);
+      console.log("WS PAYLOAD:", payload);
+      const userId = payload.id;
 
-    if (!payload) {
-      ws.send?.({ error: "Invalid Token" });
+      ws.data.userId = userId;
+
+      WebSocketService.registerUser(userId, ws);
+
+      console.log(`✅ User ${userId} connected!`);
+    } catch (err) {
+      console.error("WebSocket authentication error:", err);
+      ws.send?.(JSON.stringify({ error: "Authentication Error" }));
       ws.close?.();
       return;
     }
-    const userId = payload.sub;
-
-    ws.data.userId = userId;
-
-    WebSocketService.registerUser(userId, ws);
-
-    console.log(`✅ User ${userId} connected!`);
   }
-
+  static message(ws: any, message: any) {
+    console.log("📩 Message from client:", message);
+  }
   static close(ws: any) {
     const userId = (ws.data as any).userId;
     if (userId) {
@@ -32,9 +37,5 @@ export abstract class WebSocketService {
   }
   static removeUser(userId: string) {
     onlineUsers.delete(userId);
-  }
-  static notifyUser(actorId: string, recipientId: string, data: any) {
-    const ws = onlineUsers.get(recipientId);
-    if (ws) ws.send(JSON.stringify(data));
   }
 }

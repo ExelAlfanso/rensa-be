@@ -3,7 +3,7 @@ import { NotificationController } from "./routes/notifications";
 import { WebSocketController } from "./routes/ws";
 import { EXIFController } from "./routes/exif";
 
-const app = new Elysia()
+export const app = new Elysia()
   .use(WebSocketController)
   .use(NotificationController)
   .use(EXIFController)

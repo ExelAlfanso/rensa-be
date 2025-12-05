@@ -19,5 +19,6 @@ export const WebSocketController = new Elysia()
       userId: "" as string,
     },
     open: WebSocketService.open,
+    message: WebSocketService.message,
     close: WebSocketService.close,
   });
