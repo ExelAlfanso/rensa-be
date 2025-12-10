@@ -1,5 +1,13 @@
 import mongoose, { model, Schema } from "mongoose";
 
+export type NotificationDocument = mongoose.Document & {
+  recipientId: string;
+  actorId: string;
+  type: "photo-saved" | "photo-bookmarked" | "photo-commented";
+  photoId: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
 const NotificationSchema = new Schema(
   {
     recipientId: {
@@ -13,7 +21,7 @@ const NotificationSchema = new Schema(
     },
     type: {
       type: String,
-      enum: ["photo_saved", "photo_bookmarked", "photo_commented"], // bisa tambah jenis lain nanti
+      enum: ["photo-saved", "photo-bookmarked", "photo-commented"], // bisa tambah jenis lain nanti
       required: true,
     },
     photoId: {

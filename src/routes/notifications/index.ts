@@ -19,15 +19,16 @@ export const NotificationController = new Elysia()
         actorId: t.String(),
         recipientId: t.String(),
         photoId: t.String(),
+        type: t.String(),
       }),
     }
   )
   // /*
-  //   GET /notifications/:userId?page=[page]&limit=[limit]
+  //   GET /notifications?recipientId=&page=&limit=
   //   Fetch notifications for a user with pagination
   // */
   .get(
-    "/notifications/:recipientId",
+    "/notifications",
     async ({ query }) => {
       return await NotificationService.fetchNotifications({ query });
     },

@@ -1,13 +1,15 @@
+import { NotificationService } from "../notifications/service";
+
 export const onlineUsers = new Map<string, any>();
 
 export abstract class WebSocketService {
   static async open(ws: any) {
-    console.log("WS DATA:", ws.data.query);
+    // console.log("WS DATA:", ws.data.query);
     const token = ws.data.query.token;
 
     try {
       const payload = await ws.data.jwt.verify(token);
-      console.log("WS PAYLOAD:", payload);
+      // console.log("WS PAYLOAD:", payload);
       const userId = payload.id;
 
       ws.data.userId = userId;
@@ -22,9 +24,10 @@ export abstract class WebSocketService {
       return;
     }
   }
-  static message(ws: any, message: any) {
-    console.log("📩 Message from client:", message);
-  }
+  // static message(ws: any, message: any) {
+  //   WebSocketService.notifyUser(message.recipientId, message);
+  //   console.log(`📩 Message from : ${ws.data.userId}`, message);
+  // }
   static close(ws: any) {
     const userId = (ws.data as any).userId;
     if (userId) {
@@ -37,5 +40,17 @@ export abstract class WebSocketService {
   }
   static removeUser(userId: string) {
     onlineUsers.delete(userId);
+  }
+  static async notifyUser(recipientId: string, data: any) {
+    const ws = onlineUsers.get(recipientId);
+    const populatedData = await NotificationService.populateNotificationActor(
+      data
+    );
+    console.log("Notifying user:", recipientId, populatedData);
+    if (ws) {
+      ws.send?.(JSON.stringify(populatedData));
+    } else {
+      console.log(`User ${recipientId} is not online.`);
+    }
   }
 }
