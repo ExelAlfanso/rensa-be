@@ -2,41 +2,13 @@ import { Notification } from "./model";
 
 import { WebSocketService } from "../ws/service";
 import { api } from "../../utils/axios";
+import { redis } from "../../utils/redis";
 
+//TODO: Add rate limiting to notification creation to prevent spam
 export abstract class NotificationService {
-  static async photoSaved({ body }: any) {
-    const { actorId, recipientId, photoId, type } = body;
-    console.log("Creating photoSaved notification:", body);
-    if (actorId === recipientId) {
-      return {
-        success: false,
-        message: "Actor and recipient cannot be the same",
-      };
-    }
-    if (!actorId || !recipientId || !photoId) {
-      return {
-        success: false,
-        message: "actorId, recipientId, and photoId are required",
-      };
-    }
-    const notification = await Notification.create({
-      actorId,
-      recipientId,
-      photoId,
-      type,
-      createdAt: new Date(),
-    });
-    WebSocketService.notifyUser(recipientId, notification);
-    return {
-      success: true,
-      message: `Notification created (${type})`,
-      data: { notification },
-    };
-  }
-
   static async fetchNotifications({ query }: any) {
     const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 20;
+    const limit = Number(query.limit) || 10;
     const recipientId = query.recipientId as string;
     const notifications = await Notification.find({ recipientId })
       .sort({ createdAt: -1 })
@@ -76,16 +48,55 @@ export abstract class NotificationService {
       message: "Notifications cleared",
     };
   }
-  static async photoBookmarked({ body }: any) {
-    // Implementasi mirip photoSaved, dengan type "photo_bookmarked"
+  static async notify({ body }: any) {
+    const { actorId, recipientId, photoId, type } = body;
+    if (actorId === recipientId) {
+      return {
+        success: false,
+        message: "Actor and recipient cannot be the same",
+      };
+    }
+    if (!actorId || !recipientId || !photoId) {
+      return {
+        success: false,
+        message: "actorId, recipientId, and photoId are required",
+      };
+    }
+    const notification = await Notification.create({
+      actorId,
+      recipientId,
+      photoId,
+      type,
+      createdAt: new Date(),
+    });
+    WebSocketService.notifyUser(notification);
+    return {
+      success: true,
+      message: `Notification created (${type})`,
+      data: { notification },
+    };
   }
-  static async photoCommented({ body }: any) {
-    // Implementasi mirip photoSaved, dengan type "photo_commented"
+
+  static async checkNotificationKey(notificationKey: string) {
+    try {
+      const exists = await redis.get(notificationKey);
+      console.log(
+        "Checking notification key:",
+        notificationKey,
+        exists !== null
+      );
+      return exists !== null;
+    } catch (error) {
+      console.error("Redis error:", error);
+    }
+  }
+  static async setNotificationKey(notificationKey: string) {
+    console.log("Setting notification key:", notificationKey);
+    await redis.set(notificationKey, "1", "EX", 60);
+    return true;
   }
   static async populateNotificationActor(notification: any) {
-    const actorRes = await api.get(
-      `http://localhost:3000/api/profile/${notification.actorId}`
-    );
+    const actorRes = await api.get(`/profile/${notification.actorId}`);
     return { ...notification.toObject(), actorId: actorRes.data.data.user };
   }
 }

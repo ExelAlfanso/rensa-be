@@ -5,14 +5,28 @@ await connectDB();
 
 export const NotificationController = new Elysia()
   /*
-  POST /notifications/photo-saved
-  Body: { actorId, recipientId, photoId }
+  POST /notifications
+  Body: { actorId, recipientId, photoId,type}
   Creates a notification when a photo is saved by actorId for recipientId
 */
   .post(
-    "/notifications/photo-saved",
+    "/notifications",
     async ({ body }) => {
-      return await NotificationService.photoSaved({ body });
+      return await NotificationService.notify({ body });
+    },
+    {
+      body: t.Object({
+        actorId: t.String(),
+        recipientId: t.String(),
+        photoId: t.String(),
+        type: t.String(),
+      }),
+    }
+  )
+  .post(
+    "/notifications",
+    async ({ body }) => {
+      return await NotificationService.notify({ body });
     },
     {
       body: t.Object({

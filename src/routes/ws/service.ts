@@ -41,16 +41,39 @@ export abstract class WebSocketService {
   static removeUser(userId: string) {
     onlineUsers.delete(userId);
   }
-  static async notifyUser(recipientId: string, data: any) {
-    const ws = onlineUsers.get(recipientId);
-    const populatedData = await NotificationService.populateNotificationActor(
-      data
-    );
-    console.log("Notifying user:", recipientId, populatedData);
-    if (ws) {
-      ws.send?.(JSON.stringify(populatedData));
+  static async notifyUser(notificationData: any) {
+    const key = `notifications:${notificationData.recipientId}:${notificationData.actorId}:${notificationData.photoId}:${notificationData.type}`;
+    const exists = await NotificationService.checkNotificationKey(key);
+    if (exists) {
+      return;
     } else {
-      console.log(`User ${recipientId} is not online.`);
+      await NotificationService.setNotificationKey(key);
+    }
+
+    const ws = onlineUsers.get(notificationData.recipientId);
+
+    const populatedData = await NotificationService.populateNotificationActor(
+      notificationData
+    );
+
+    if (ws) {
+      ws.send(
+        JSON.stringify({
+          id: populatedData._id.toString(),
+          recipientId: populatedData.recipientId,
+          actorId: {
+            id: populatedData.actorId._id.toString(),
+            username: populatedData.actorId.username,
+            avatar: populatedData.actorId.avatar ?? null,
+          },
+          photoId: populatedData.photoId,
+          type: populatedData.type,
+          message: populatedData.message,
+          createdAt: populatedData.createdAt,
+        })
+      );
+    } else {
+      console.log(`User ${notificationData.recipientId} is not online.`);
     }
   }
 }
