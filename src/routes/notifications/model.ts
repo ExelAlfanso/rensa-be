@@ -28,12 +28,11 @@ const NotificationSchema = new Schema(
       type: String,
       required: true,
     },
-
     // kalau mau implement read notification nanti
-    // read: {
-    //   type: Boolean,
-    //   default: false,
-    // },
+    read: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

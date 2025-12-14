@@ -42,13 +42,13 @@ export abstract class WebSocketService {
     onlineUsers.delete(userId);
   }
   static async notifyUser(notificationData: any) {
-    const key = `notifications:${notificationData.recipientId}:${notificationData.actorId}:${notificationData.photoId}:${notificationData.type}`;
-    const exists = await NotificationService.checkNotificationKey(key);
-    if (exists) {
-      return;
-    } else {
-      await NotificationService.setNotificationKey(key);
-    }
+    // const key = `notifications:${notificationData.recipientId}:${notificationData.actorId}:${notificationData.photoId}:${notificationData.type}`;
+    // const exists = await NotificationService.checkNotificationKey(key);
+    // if (exists) {
+    //   return;
+    // } else {
+    //   await NotificationService.setNotificationKey(key);
+    // }
 
     const ws = onlineUsers.get(notificationData.recipientId);
 

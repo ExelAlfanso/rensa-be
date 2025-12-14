@@ -3,7 +3,6 @@ import { NotificationController } from "./routes/notifications";
 import { WebSocketController } from "./routes/ws";
 import { EXIFController } from "./routes/exif";
 import cors from "@elysiajs/cors";
-import { redis } from "bun";
 
 export const app = new Elysia({ prefix: "/api" })
   .use(cors({ origin: "http://localhost:3000" }))
