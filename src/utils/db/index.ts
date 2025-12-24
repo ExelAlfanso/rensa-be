@@ -52,11 +52,12 @@ export async function connectDB() {
   if (isConnected) return;
 
   const uri = buildMongoUri();
-
-  console.log("BUN VERSION:", process.versions.bun);
-  console.log("NODE ENV:", process.env.NODE_ENV);
-  console.log("MONGO URI EXISTS:", !!uri);
-  console.log("MONGO URI:", uri);
+  if (process.env.NODE_ENV !== "production") {
+    console.log("BUN VERSION:", process.versions.bun);
+    console.log("NODE ENV:", process.env.NODE_ENV);
+    console.log("MONGO URI EXISTS:", !!uri);
+    console.log("MONGO URI:", uri);
+  }
 
   try {
     const db = await mongoose.connect(uri);

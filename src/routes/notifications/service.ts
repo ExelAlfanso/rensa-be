@@ -15,13 +15,22 @@ export abstract class NotificationService {
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
-
     const populatedNotifications = await Promise.all(
       notifications.map(async (n) => {
-        const actorRes = await api.get(
-          `http://localhost:3000/api/profile/${n.actorId}`
-        );
-        return { ...n.toObject(), id: n._id, actorId: actorRes.data.data.user };
+        try {
+          const actorRes = await api.get(`/profile/${n.actorId}`);
+          return {
+            ...n.toObject(),
+            id: n._id,
+            actorId: actorRes.data.data.user,
+          };
+        } catch (error) {
+          throw {
+            success: false,
+            message: `Failed to fetch populatedNotifications' actor profile for ${n.actorId}`,
+            error: error,
+          };
+        }
       })
     );
 
@@ -29,6 +38,7 @@ export abstract class NotificationService {
 
     return {
       success: true,
+      status: 200,
       message: "Notifications fetched",
       data: {
         notifications: populatedNotifications,
@@ -44,6 +54,7 @@ export abstract class NotificationService {
     if (!userId) {
       return {
         success: false,
+        status: 400,
         message: "userId is required",
       };
     }
@@ -53,6 +64,7 @@ export abstract class NotificationService {
       const res = await Notification.deleteMany({ recipientId: userId });
       return {
         success: true,
+        status: 200,
         message: "Notifications cleared",
         data: {
           notifications: res,
@@ -61,24 +73,34 @@ export abstract class NotificationService {
     } catch (error) {
       return {
         success: false,
+        status: 500,
         message: "Failed to clear notifications",
       };
     }
   }
   static async notify({ user, body }: any) {
     const actorId = user.id;
-    console.log("actor authorized!", actorId);
     const { recipientId, photoId, type } = body;
     if (actorId === recipientId) {
-      return {
+      throw {
         success: false,
-        message: "Actor and recipient cannot be the same",
+        message: "Cannot notify yourself",
       };
     }
     if (!actorId || !recipientId || !photoId) {
-      return {
+      throw {
         success: false,
-        message: "actorId, recipientId, and photoId are required",
+        message: "Missing required fields",
+      };
+    }
+    if (
+      type !== "photo-saved" &&
+      type !== "photo-bookmarked" &&
+      type !== "photo-commented"
+    ) {
+      throw {
+        success: false,
+        message: "Invalid notification type",
       };
     }
     try {
@@ -97,7 +119,7 @@ export abstract class NotificationService {
         data: { notification },
       };
     } catch (error) {
-      return {
+      throw {
         success: false,
         message: "Failed to create notification",
       };
@@ -106,21 +128,15 @@ export abstract class NotificationService {
 
   static async checkNotificationKey(notificationKey: string) {
     try {
-      // Check if Redis is connected
       if (!redisConnected()) {
         console.warn("Redis not connected, skipping duplicate check");
-        return false; // Allow notification if Redis is down
+        return false;
       }
       const exists = await redis.get(notificationKey);
-      // console.log(
-      //   "Checking notification key:",
-      //   notificationKey,
-      //   exists !== null
-      // );
+
       return exists !== null;
     } catch (error) {
-      console.error("Redis error:", error);
-      return false; // Allow notification if Redis check fails
+      throw { success: false, message: "Failed to check notification key" };
     }
   }
   static async setNotificationKey(notificationKey: string) {
@@ -133,22 +149,27 @@ export abstract class NotificationService {
       await redis.set(notificationKey, "1", "EX", 60);
       return true;
     } catch (error) {
-      console.error("Redis error:", error);
-      return false;
+      throw { success: false, message: "Failed to set notification key" };
     }
   }
   static async markNotificationAsRead(notificationId: string) {
     try {
       await Notification.findByIdAndUpdate(notificationId, { read: true });
     } catch (error) {
-      console.error("Database error:", error);
-      return false;
+      throw { success: false, message: "Failed to mark notification as read" };
     }
     return true;
   }
 
   static async populateNotificationActor(notification: any) {
-    const actorRes = await api.get(`/profile/${notification.actorId}`);
-    return { ...notification.toObject(), actorId: actorRes.data.data.user };
+    try {
+      const actorRes = await api.get(`/profile/${notification.actorId}`);
+      return { ...notification.toObject(), actorId: actorRes.data.data.user };
+    } catch (error) {
+      throw {
+        success: false,
+        message: `Failed to fetch actor profile for ${notification.actorId}`,
+      };
+    }
   }
 }

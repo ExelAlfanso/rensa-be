@@ -1,32 +1,35 @@
-FROM oven/bun AS build
-
+# ===== Base =====
+FROM oven/bun:1.3.5 AS base
 WORKDIR /app
 
-# Cache packages installation
-COPY package.json package.json
-COPY bun.lock bun.lock
-
+COPY package.json bun.lock ./
 RUN bun install
 
+# ===== Development =====
+FROM base AS dev
+ENV NODE_ENV=development
+COPY ./src ./src
+EXPOSE 3002
+CMD ["bun", "run", "src/index.ts"]
+
+# ===== Build =====
+FROM base AS build
+ENV NODE_ENV=production
 COPY ./src ./src
 
-ENV NODE_ENV=production
-
 RUN bun build \
-	--compile \
-	--minify-whitespace \
-	--minify-syntax \
-	--outfile server \
-	src/index.ts
+  --compile \
+  --minify-whitespace \
+  --minify-syntax \
+  --outfile server \
+  src/index.ts
 
-FROM gcr.io/distroless/base
-
+# ===== Production =====
+FROM gcr.io/distroless/base AS prod
 WORKDIR /app
-
-COPY --from=build /app/server server
-
 ENV NODE_ENV=production
 
-CMD ["./server"]
+COPY --from=build /app/server ./server
 
 EXPOSE 3002
+CMD ["./server"]

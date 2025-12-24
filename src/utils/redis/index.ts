@@ -9,11 +9,11 @@ client
   .connect()
   .then(() => {
     isConnected = true;
-    console.log("🟢 Redis connected");
+    console.log("Redis connected");
   })
   .catch((error) => {
-    console.error("⚠️  Redis connection error:", error.message);
-    console.log("ℹ️  Continuing without Redis (some features may be limited)");
+    console.error("Redis connection error:", error.message);
+    console.log("ℹContinuing without Redis (some features may be limited)");
     isConnected = false;
   });
 

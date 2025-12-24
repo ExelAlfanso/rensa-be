@@ -19,7 +19,7 @@ export const NotificationController = new Elysia()
     if (!payload) return {};
 
     return {
-      user: payload, // ⬅️ ini penting
+      user: payload,
     };
   })
   /*
@@ -50,14 +50,14 @@ export const NotificationController = new Elysia()
   .get(
     "/notifications",
     async ({ user, query }) => {
-      if (!user) return { success: false, message: "Unauthorized" };
+      if (!user?.id) return { success: false, message: "Unauthorized" };
       return await NotificationService.fetchNotifications({
         query: { ...query, recipientId: user.id },
       });
     },
     {
       query: t.Object({
-        recipientId: t.String(), // user yang mau fetch notifikasi
+        recipientId: t.String(),
         page: t.Optional(t.Numeric()),
         limit: t.Optional(t.Numeric()),
       }),
