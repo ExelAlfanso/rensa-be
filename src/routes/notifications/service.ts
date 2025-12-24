@@ -3,10 +3,11 @@ import { Notification } from "./model";
 import { WebSocketService } from "../ws/service";
 import { api } from "../../utils/axios";
 import { redis, redisConnected } from "../../utils/redis";
+import { connectDB } from "../../utils/db";
 
-//TODO: implement read notifications
 export abstract class NotificationService {
   static async fetchNotifications({ query }: any) {
+    await connectDB();
     const page = Number(query.page) || 1;
     const limit = Number(query.limit) || 10;
     const recipientId = query.recipientId as string;
@@ -48,6 +49,7 @@ export abstract class NotificationService {
     }
 
     try {
+      await connectDB();
       const res = await Notification.deleteMany({ recipientId: userId });
       return {
         success: true,
@@ -80,6 +82,7 @@ export abstract class NotificationService {
       };
     }
     try {
+      await connectDB();
       const notification = await Notification.create({
         actorId,
         recipientId,

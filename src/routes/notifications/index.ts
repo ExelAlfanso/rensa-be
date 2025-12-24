@@ -1,8 +1,6 @@
 import { Elysia, t } from "elysia";
 import { jwt } from "@elysiajs/jwt";
-import { connectDB } from "../../utils/db";
 import { NotificationService } from "./service";
-await connectDB();
 
 export const NotificationController = new Elysia()
   .use(
