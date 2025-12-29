@@ -4,6 +4,7 @@ import { WebSocketService } from "../ws/service";
 import { api } from "../../utils/axios";
 import { redis, redisConnected } from "../../utils/redis";
 import { connectDB } from "../../utils/db";
+import User from "../user/model";
 
 export abstract class NotificationService {
   static async fetchNotifications({ query }: any) {
@@ -15,27 +16,23 @@ export abstract class NotificationService {
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
-      // console.log(`[NotificationService] Fetched ${notifications.length} notifications for recipient ${recipientId}`);
-      const populatedNotifications = await Promise.all(
+    // console.log(
+    //   `[NotificationService] Fetched ${notifications.length} notifications for recipient ${recipientId}`
+    // );
+    const populatedNotifications = await Promise.all(
       notifications.map(async (n) => {
-        try {
-          const actorRes = await api.get(`/profile/${n.actorId}`);
-          // console.log(`[NotificationService] Fetched actor profile for ${n.actorId}: ${actorRes.data.data.user.username}`);
-          return {
-            ...n.toObject(),
-            id: n._id,
-            actorId: actorRes.data.data.user,
-          };
-        } catch (error) {
-          throw {
-            success: false,
-            message: `Failed to fetch populatedNotifications' actor profile for ${n.actorId}`,
-            error: error,
-          };
-        }
+        const actorRes = await NotificationService.populateNotificationActor(n);
+        // console.log(
+        //   `[NotificationService] Fetched actor profile for ${n.actorId}: ${actorRes}`
+        // );
+        return {
+          ...n.toObject(),
+          id: n._id,
+          actorId: actorRes,
+        };
       })
     );
-    if(!populatedNotifications){
+    if (!populatedNotifications) {
       throw {
         success: false,
         message: `No notifications found for recipient ${recipientId}`,
@@ -169,8 +166,11 @@ export abstract class NotificationService {
 
   static async populateNotificationActor(notification: any) {
     try {
-      const actorRes = await api.get(`/profile/${notification.actorId}`);
-      return { ...notification.toObject(), actorId: actorRes.data.data.user };
+      const actorRes = await User.findById(notification.actorId);
+      // console.log(
+      //   `[NotificationService] populateNotificationActor: Fetched actor profile for ${notification.actorId}: ${actorRes?.username}`
+      // );
+      return { ...notification.toObject(), actorId: actorRes };
     } catch (error) {
       throw {
         success: false,
