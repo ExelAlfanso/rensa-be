@@ -166,11 +166,13 @@ export abstract class NotificationService {
 
   static async populateNotificationActor(notification: any) {
     try {
-      const actorRes = await User.findById(notification.actorId);
-      // console.log(
-      //   `[NotificationService] populateNotificationActor: Fetched actor profile for ${notification.actorId}: ${actorRes?.username}`
-      // );
-      return { ...notification.toObject(), actorId: actorRes };
+      const actorRes = await User.findById(notification.actorId).select(
+        "_id username avatar"
+      );
+      console.log(
+        `[NotificationService] populateNotificationActor: Fetched actor profile for ${notification.actorId}: ${actorRes?.username}`
+      );
+      return actorRes;
     } catch (error) {
       throw {
         success: false,
