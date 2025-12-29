@@ -15,10 +15,12 @@ export abstract class NotificationService {
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
-    const populatedNotifications = await Promise.all(
+      // console.log(`[NotificationService] Fetched ${notifications.length} notifications for recipient ${recipientId}`);
+      const populatedNotifications = await Promise.all(
       notifications.map(async (n) => {
         try {
           const actorRes = await api.get(`/profile/${n.actorId}`);
+          // console.log(`[NotificationService] Fetched actor profile for ${n.actorId}: ${actorRes.data.data.user.username}`);
           return {
             ...n.toObject(),
             id: n._id,
@@ -33,9 +35,13 @@ export abstract class NotificationService {
         }
       })
     );
-
+    if(!populatedNotifications){
+      throw {
+        success: false,
+        message: `No notifications found for recipient ${recipientId}`,
+      };
+    }
     const total = await Notification.countDocuments({ recipientId });
-
     return {
       success: true,
       status: 200,
@@ -140,7 +146,7 @@ export abstract class NotificationService {
     }
   }
   static async setNotificationKey(notificationKey: string) {
-    console.log("Setting notification key:", notificationKey);
+    // console.log("Setting notification key:", notificationKey);
     try {
       if (!redisConnected()) {
         console.warn("Redis not connected, skipping key set");

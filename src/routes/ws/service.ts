@@ -34,20 +34,27 @@ export abstract class WebSocketService {
   }
   static async notifyUser(notificationData: any) {
     const key = `notifications:${notificationData.recipientId}:${notificationData.actorId}:${notificationData.photoId}:${notificationData.type}`;
+    // console.log(`[WS] Checking for duplicate notification with key: ${key}`);
     const exists = await NotificationService.checkNotificationKey(key);
     if (exists) {
+      // console.log(`[WS] ⚠️  Duplicate notification detected, skipping send`);
       return;
     } else {
+      // console.log(`[WS] No duplicate found, setting notification key`);
       await NotificationService.setNotificationKey(key);
     }
 
     const ws = onlineUsers.get(notificationData.recipientId);
+    // console.log(`[WS] Checking if recipient ${notificationData.recipientId} is online: ${ws ? '✅ Yes' : '❌ No'}`);
 
+    // console.log(`[WS] Populating notification actor data...`);
     const populatedData = await NotificationService.populateNotificationActor(
       notificationData
     );
+    // console.log(`[WS] ✅ Actor data populated for user: ${populatedData.actorId.username}`);
 
     if (ws) {
+      // console.log(`[WS] Sending notification to recipient ${notificationData.recipientId}...`);
       ws.send(
         JSON.stringify({
           id: populatedData._id.toString(),
@@ -63,8 +70,9 @@ export abstract class WebSocketService {
           createdAt: populatedData.createdAt,
         })
       );
+      // console.log(`[WS] ✅ Notification sent successfully via WebSocket`);
     } else {
-      console.log(`User ${notificationData.recipientId} is not online.`);
+      // console.log(`[WS] ⚠️  User ${notificationData.recipientId} is not online, notification saved to database only`);
     }
   }
 }
