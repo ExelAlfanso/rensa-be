@@ -12,11 +12,9 @@ export const app = new Elysia()
       allowedHeaders: ["Content-Type", "Authorization"],
     })
   )
+  .get("/health", () => ({ status: "ok" }))
   .group("/api", (app) =>
-    app
-      .use(WebSocketController)
-      .use(NotificationController)
-      .use(EXIFController)
+    app.use(WebSocketController).use(NotificationController).use(EXIFController)
   )
   .listen(process.env.PORT || 3002, () =>
     console.log(

@@ -24,12 +24,20 @@ RUN bun build \
   --outfile server \
   src/index.ts
 
+RUN bun build \
+  --compile \
+  --minify-whitespace \
+  --minify-syntax \
+  --outfile healthcheck \
+  src/healthcheck.ts
+
 # ===== Production =====
 FROM gcr.io/distroless/base AS prod
 WORKDIR /app
 ENV NODE_ENV=production
 
 COPY --from=build /app/server ./server
+COPY --from=build /app/healthcheck ./healthcheck
 
 EXPOSE 3002
 CMD ["./server"]
