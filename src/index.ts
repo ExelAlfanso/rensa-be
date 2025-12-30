@@ -21,3 +21,6 @@ export const app = new Elysia()
       `Server is running on http://0.0.0.0:${process.env.PORT || 3002}`
     )
   );
+
+// Trigger CI/CD change
+console.log("CI/CD Triggered");
