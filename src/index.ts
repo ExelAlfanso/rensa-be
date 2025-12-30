@@ -6,7 +6,7 @@ import cors from "@elysiajs/cors";
 export const app = new Elysia()
   .use(
     cors({
-      origin: "http://localhost:3000",
+      origin: process.env.CORS_ORIGIN || "http://localhost:3000",
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization"],
@@ -16,8 +16,8 @@ export const app = new Elysia()
   .group("/api", (app) =>
     app.use(WebSocketController).use(NotificationController).use(EXIFController)
   )
-  .listen(process.env.PORT || 3002, () =>
+  .listen({ port: process.env.PORT || 3002, hostname: "0.0.0.0" }, () =>
     console.log(
-      `Server is running on http://localhost:${process.env.PORT || 3002}`
+      `Server is running on http://0.0.0.0:${process.env.PORT || 3002}`
     )
   );
