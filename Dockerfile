@@ -39,5 +39,12 @@ ENV NODE_ENV=production
 COPY --from=build /app/server ./server
 COPY --from=build /app/healthcheck ./healthcheck
 
+# ===== Debug =====
+FROM oven/bun:1.3.5 AS debug
+WORKDIR /app
+COPY . .
+EXPOSE 3002
+CMD ["bun", "run", "src/index.ts"]
+
 EXPOSE 3002
 CMD ["./server"]
